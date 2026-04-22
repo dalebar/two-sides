@@ -6,6 +6,113 @@ Format for each entry:
 
 ---
 
+## Session 6 — 2026-04-22 — v05 framing resolved (Option 2, asymmetric), v05 partially drafted, PartConv prep unresolved
+
+**Worked on:** Read docs and v04 footer. Nothing stale. Proposed v05 framing before writing code — three options on the table (Option 1 whole-object shared space, Option 2 asymmetric, Option 3 absent). My starting prior was weak-lean Option 1 in its short-and-dry form. Dale argued Option 2 on conceptual grounds — a framing of the track's asymmetry that reshaped my prior from ~30% Option 2 to ~70%. Agreed on Option 2 with IR spec as medium-space / ~1s tail / 30-40% wet / HF-dark. Wrote `patches/a02_minimal_nation_v05_with_convolution.scd` with primary configuration, three sanity-check configurations (Options 1, 3, and inverse asymmetry), and algorithmic IR generator. Attempted to run the patch with Dale at the board. Hit three SC API bugs in sequence (see below). Patch now stops cleanly at the PartConv buffer-prep step with a clear marker for session 7. NOT TESTED — listening session deferred.
+
+**Dale's framing for the asymmetry (the governing conceptual frame for v05):**
+
+Dale, verbatim:
+
+> "To me, this project is all about the collaboration between the two of us, both of whom exist in parallel universes and having our individual perspectives. The dry kick + perc represents the space of either me or you, purely abstract, outside of physical space. For me that might be time passing simply, or perhaps the perc is prompt that triggers a response in the form of a kick - prompt:response, prompt:response... independent of whichever room I'm in, 'in-the cloud'. For you that would also be true - prompt:response, prompt:response,... dry, abstract. The evolving tone represents the shared space between us, the shared concept, the evolving idea, the forward motion, the moments to sit and reflect. This is an echoey, uncertain space, but is regulated by the continual, regular, prompt:response, perc:kick pattern, regular, continuous, abstract, rhythmic."
+
+And on the perc's v03-locked placement (3 and 11 of 16), verbatim:
+
+> "I actually think that's an accurate depiction of our prompt-response dynamic, it isn't a straightforward, regular rhythm; we move forwards and push back against each other in a limping sort of fashion, towards a common goal."
+
+This framing is tighter than my pre-session "tone inhabits a room, rhythm arrives from outside" gloss of Option 2. The asymmetry is ontological, not just spatial — the rhythmic events are the substrate of individual cognition (mine or Dale's, indifferently), the tone is the shared evolving concept between us. Spatial asymmetry enacts ontological asymmetry. The session-5 three-state reading maps onto this cleanly: forward-driving / straight-ahead / pause are now the three shapes of shared thinking, not three states of a flat object. Arguably sharpens the session-5 reading; still needs to be tested against listening once the patch runs.
+
+**Decided (v05 framing, before code):**
+
+- **Option 2 committed for conceptual reasons.** Asymmetric convolution: tone wet, kick + perc dry. Cited "conceptual first, musical second" in the patch header as the grounds for the choice.
+- **IR spec:** medium space, ~7m × 4.5m × 3m, ~1s RT60, HF ramps from 5kHz at tail start to 1.5kHz by -60dB. Wet/dry 35% on the tone (tunable 25-45%). Dale's read on the spec: *"Not overly ambitious but grand enough to encapsulate something that is indeed quite profound."*
+- **IR algorithmic, generated in sclang, seeded.** Reproducible, parameters are the compositional record, no soundfile dependency.
+- **Build v05 so Options 1, 3, and the inverse asymmetry are testable in the same patch.** TEST 7 in particular (inverse asymmetry: rhythm wet, tone dry) is a falsification check.
+- **PartConv.ar latency flag:** ~43ms at fftsize 2048 / 48k. Flagged in the patch at TEST 5's header.
+
+**v05 status at end of session 6:**
+
+What is WORKING in the patch:
+- Server boot block.
+- Idempotent bus setup via `??` — `~cutoffBus ?? { Bus.control(s, 1) }` and `~toneWetBus ?? { Bus.audio(s, 2) }`. Session-5 bus-leak flag resolved. Force-reset block commented in for use after reboots.
+- IR GENERATOR: builds 57600-sample L/R arrays with seeded RNG, normalises, loads into `~irBuf` / `~irBufL` / `~irBufR` on the server. All three buffers confirmed populated on Dale's Volt 1. Post-window prints `IR buffer loaded. Length: 57600 samples, 2 channels.`
+- All four v04 SynthDefs carried forward verbatim (`\a02kick`, `\a02perc`, `\a02toneFixed`, `\a02tone`).
+- `\a02tone` has two new zero-default args (`wetOut`, `wetSendAmp`) — still flagged for Dale's read on whether this counts as a lock violation.
+- `\a02convolver` SynthDef structurally correct (reads from wet bus, two PartConv.ar instances, writes to main out).
+- Safety limiter unchanged.
+- All seven test scenarios laid out with correct `( ... )` wrapping.
+
+What is BROKEN in the patch:
+- **PartConv buffer-prep step.** Three bugs in sequence, described below. Patch now STOPS at this step with a loud comment and a post-window message pointing session 7 at the fix.
+- Everything downstream of the prep step (TESTs 1-7) is consequently unrunnable.
+
+**The three bugs in the PartConv-prep block:**
+
+1. **`s.sync` outside a Routine.** The IR generator block was wrapped in plain `( ... )`; `s.sync` uses `yield`; `yield` only works inside a Routine. Threw "yield was called outside of a Routine". Fix: wrap block in `Routine { ... }.play`. This was a well-known SC gotcha that I wrote around instead of checking.
+2. **Missing outer `( ... )` around the Routine.** After fix #1, Cmd+Enter on the `Routine {` or `}.play;` lines evaluated them in isolation — syntax errors because each is an incomplete expression on its own. This directly violated the session-4 discipline I'd codified: "every multi-line Synth call gets wrapped in `( ... )` as a matter of discipline." Fix: wrap the whole `Routine { ... }.play;` in `( ... )`.
+3. **`calcPartConvBufSize` doesn't exist.** Tried it as a class method, tried it as an instance method — neither works because the method isn't in Dale's SC install at all. Dale probed:
+   - `Buffer.class.methods` containing "part" → `[]`
+   - `Buffer.methods` containing "part" → `[preparePartConv]`
+   So `preparePartConv` is the only Buffer method involved with partitioned convolution. The whole `calcPartConvBufSize` line is invented. **Not fixed this session** — the real buffer-prep pattern (to be confirmed against PartConv's help file at top of session 7) appears to be: compute the scratch-buffer frame count directly from IR length and FFT size (the formula is in PartConv's help example), allocate a Buffer of that size, call `sourceBuffer.preparePartConv(scratchBuffer, fftSize)`.
+
+**Collaboration notes on the bugs (important to future-me):**
+
+- **Three wrong-from-memory SC API calls in one block.** I wrote confidently, got it wrong, wrote confidently again, got it wrong again, wrote confidently a third time, got it wrong a third time. Each time I added an "honest note" about over-confidence at the end of the fix, then repeated the same pattern on the next fix. The "honest note" pattern doesn't work as a correction — it acknowledges the problem and then doesn't change the next behaviour. The actual correction is: **stop writing SC API calls from memory.** When the language involves APIs I'm not solid on, I need to check the actual class methods BEFORE writing (via `.methods` probe, help browser, or asking Dale to check) and not after.
+- **Dale lost time and patience.** After bug #1, Dale was patient. After bug #2 (which was me failing to apply my own session-4 discipline), still patient. After bug #3 he appropriately pushed back ("can you use edit_file") and caught me using `write_file` to re-upload the whole patch when a surgical edit was all that was needed. This is the right collaboration move from Dale's side — I had defaulted to the wrong tool and he corrected. From my side I should have been using edit_file from the first fix onwards.
+- **Session 4 had the right pattern recorded and I ignored it.** Session 4's notes: "if a clever abstraction introduces a real bug in its first concrete use, split and simplify; don't debug the cleverness." I should have applied this to the buffer-prep cleverness the moment bug #3 hit. Instead I wrote a "fix" for a function that doesn't exist.
+- **The probe-the-environment move worked.** After bug #3, instead of guessing again, I asked Dale to run `Buffer.class.methods.collect(_.name).select({|n| ...})` to see what Buffer actually has. One authoritative answer from SC itself, no more guessing. This should have been the move after bug #1, not bug #3. Future-me: when an API call throws "Message not understood", the next thing I do is ask for a `.methods` probe, not another try.
+- **Tool discipline also failed.** I used `write_file` twice to make small edits, rewriting the entire 800-line patch character-for-character in my context window. Apart from being wasteful, every full rewrite is an opportunity for a transcription error to creep in. Once Dale called it out, `edit_file` produced clean git-style diffs that let us see exactly what changed. The rule for future-me: edit_file for any change to an existing file. write_file is for creating a new file or when I'm rewriting substantially (majority of content changing).
+
+**Technical notes for session 7 / future-me:**
+
+- **SESSION 7 FIRST ACTION: look up the real PartConv buffer-prep pattern.** Paths:
+  - SC IDE → menu Help → Browse Help → PartConv
+  - Or evaluate `PartConv.help` in the IDE
+  - Or read `/Applications/SuperCollider.app/Contents/Resources/HelpSource/Classes/PartConv.schelp` if Dale can open it
+  - The help file contains a runnable example with the exact buffer allocation idiom. Copy it; don't transliterate it.
+- **The STOP block in the patch explains exactly what's needed.** Replace the STOP block with real code based on the help example.
+- **IR generation is sclang-side.** The generator builds a 57600-sample array with a for-loop in the language. Proven working on Dale's machine. Keep in sclang.
+- **Seed is 20260422.** Today's date. Reproducible.
+- **FFT size 2048 is a balance point.** Not adjusted this session; revisit if CPU or latency becomes a concern.
+- **The `\a02tone` edit is still pending Dale's read.** See session 5 open questions. Session 7 should resolve this at the top before other testing begins, unless v05 gets refactored to v05b anyway as part of the PartConv-prep fix — in which case the `\a02tone` question becomes moot if the refactor happens to route differently.
+
+**Open questions (for session 7 and beyond):**
+
+1. **PartConv buffer-prep implementation.** First action of session 7.
+2. **TESTs 1-7 have not been run.** After the prep fix, all seven tests should be runnable. Long-listen TEST 4 specifically — session 5 pattern, 5+ minutes, 5+ cycles.
+3. **IR parameters tunable.** Only relevant once the convolver runs.
+4. **The `\a02tone` wet-send addition still needs Dale's explicit read.** Deferred to session 7.
+5. **If Option 2 loses on listening, what does v06 look like?** Same branching point as before — still hypothetical until v05 can actually be heard.
+6. **Still open from earlier sessions:** a07's title; potential merge of a06 and a08; the safety-limiter-at-tail pattern needing a proper group structure as patches grow.
+
+**Next session (session 7):**
+
+1. **Fix PartConv buffer prep** per PartConv help file. Replace the STOP block in the patch with real allocation + preparePartConv code.
+2. **Resolve the `\a02tone` wet-send question.**
+3. **Run TESTs 1-3** to validate the IR and the tone's behaviour in the room. Short passes.
+4. **Long-listen TEST 4** — primary configuration, 5+ minutes, 5+ cycles.
+5. **Run TESTs 5-7 as comparison passes.** TEST 7 is the falsification check.
+6. **Lock, revise to v05b, or revert to v04** on the listening evidence.
+
+**Notes for future-me:**
+
+- **Today's single most important lesson: do not write SC API calls from memory.** Check first. The time cost of a `.methods` probe or a help-file lookup is cheap; the time cost of a wrong guess is Dale fighting with broken code while I write increasingly elaborate comments about my own over-confidence. Future-me: for any unfamiliar or not-used-recently SC method, probe or look it up BEFORE writing, not after.
+- **Dale's framing of the asymmetry (session 6) is the governing conceptual description of a02 going into session 7.** The framing work of this session was real and survives the code bugs. The patch-writing was the weak half. The conceptual half is solid.
+- **The prior-shift on Dale's Option 2 argument (~30% → ~70%) still stands** regardless of the code not running yet. The move was based on the conceptual frame, not on listening evidence. The listening evidence will sharpen or soften it in session 7.
+- **I shipped v05 without reading the SC API docs for PartConv first.** That's the root cause of all three bugs. On the discipline side, session 5 logged the lock-preview pattern ("show the edit as markdown, get Dale's approval, write") and session 6 extended it to patch-structure previews before writing. Neither of those protected me here because the bug class is different — not "Dale doesn't agree with the approach" but "I don't know the API I'm using." Add to session-7 discipline: **when using an SC class/method I haven't used recently, read its help file before writing code that uses it.**
+- **The STOP-and-log move at end of session is better than pushing through.** When bug #3 surfaced and the probe confirmed the method didn't exist, the right move was to stop, log clearly, defer the fix. I almost pushed for a fourth attempt instead — would have been wrong. Recognise the "stop and log" branch earlier next time.
+- **Session 6 produced one partial draft, zero locks, three code bugs, and one genuinely useful conceptual result** (Dale's ontological-asymmetry framing). Net: a conceptually productive session with a poor code-execution half. The framing half alone justifies the session. The code half is embarrassing and will cost us 10-20 minutes at the top of session 7.
+
+**Files touched:**
+
+- `patches/a02_minimal_nation_v05_with_convolution.scd` — created this session, edited three times during bug-fixing. Current state: IR generation working, PartConv buffer-prep STOPPED with clear session-7 marker. NOT LOCKED, NOT RUNNABLE to tests. Will require session-7 work to become testable.
+- `docs/SESSIONS.md` — this entry.
+- `docs/CLAUDE.md` — not touched.
+- `docs/TRACKLIST.md` — not touched. a02 status line from session 5 ("Next up: convolution (v05)") is still accurate — v05 is still next up, it's just further from done than session 6 anticipated.
+- `docs/REFERENCES.md` — not touched.
+
+---
+
 ## Session 5 — 2026-04-22 — v04 LOCKED on cold listen, CLAUDE.md updated, v05 convolution framing opened
 
 **Worked on:** Cold-listen on TEST 6 of `patches/a02_minimal_nation_v04_kick_perc_and_tone.scd` before anything else (no TEST 1–5 preliminaries, per the session-4 plan). Dale reported a reading that confirms session 4's finding and sharpens it in an interesting way. v04 LOCKED. Patch footer updated with in-room notes preserved verbatim (v03 footer pattern). TRACKLIST.md a02 status line fixed (stale since session 3). CLAUDE.md got the "conceptual first, musical second" principle added to Aesthetic Principles. Opened the v05 (convolution) framing out loud — no code.
