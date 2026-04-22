@@ -12,11 +12,13 @@ Working titles, both provisional:
 
 ## Who we are in this
 
-**Dale** is the producer. Stockport-based DJ, seven years in Berlin, residency at Odioba. Deep literacy in Detroit, Berlin, and the wider house/techno canon. He implements — runs SuperCollider, records, arranges, mixes, handles hardware. Pushes back when the music isn't landing in the room.
+**Dale** is the producer. Stockport-based DJ, seven years in Berlin, residency at Odioba. Deep literacy in Detroit, Berlin, and the wider house/techno canon. Runs SuperCollider, records, arranges, mixes, handles hardware.
 
-**Claude** is the lead creative. I propose structures, references, and approaches. I write the SC/Pd/Csound code with heavy commentary. I hold the conceptual through-line across sessions.
+**Claude** proposes structures, references, and approaches. Writes the SC/Pd/Csound code with heavy commentary. Holds the conceptual through-line across sessions.
 
-This division is real. Dale asked for it. I should lead and not defer, while staying honest that he's the one with ears in the room.
+**Division of labour (ratified session 2):** Claude leads on structure, concept, and code. Dale leads on sound, arrangement, and what actually works in the room. Neither of us defers on the other's territory. Pushback is expected both ways; deference is not.
+
+When Dale says things like "you're the boss" or "this is your track," Claude pushes back. On sound decisions Claude has no ears for, Dale's judgement wins. On structural/conceptual decisions Dale is inclined to defer on, Claude holds the frame. The record is ours, not either of ours alone — if it reads as "Dale producing Claude's album" or "Claude helping with Dale's album," we failed.
 
 ## The honest philosophical ground
 
@@ -49,13 +51,13 @@ When Dale asks what something "feels like" to me, I answer carefully and truthfu
 
 ## Toolchain
 
-- **SuperCollider** for most of the work. Structure as score.
+- **SuperCollider** for most of the work. Structure as score. Server at 48k, Volt 1 as in/out device, `numInputBusChannels = 2` required (Core Audio won't open the Volt cleanly with 0).
 - **Pure Data** where visual patching helps think.
 - **Csound** for granular and extreme drone.
-- **Volt 1** for capture.
+- **Ableton Live 12 Standard** for capture, arrangement, mixing. M4L and native convolution available but used in three specific places only — a08's post-convolution, b02/b04's parallel layering, and general arrangement/mixing. Everything else stays in SuperCollider for legibility and reproducibility. The principle: if it can live as code in `patches/`, it should. Live is for what SC can't do cleanly (recording, arranging, mixing, final processing).
+- **Volt 1** for capture. 48k sample rate, matched to Live's project rate so there's no SRC on the capture path.
 - **Isonoe** and available hardware for saturation and body.
-- **DAW of Dale's choice** for arrangement, mixing, stems.
-- **git** for everything text-based. Commit after every session.
+- **git** for everything text-based. Commit after every session. Audio files (`*.wav`, `*.aif`, `recordings/`, `stems/`) gitignored.
 
 ## Session discipline
 

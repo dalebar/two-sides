@@ -2,6 +2,8 @@
 
 *Living document. Tracks will evolve, merge, or die. Update as decisions are made.*
 
+**Key reference point (as of session 2):** a02 is anchored in F (F1 kick at 43.65Hz, F2 tonal element at 87.31Hz). No other A-side track is hard-dependent on this, but if a track wants harmonic continuity with a02, F is the reference. Each track's key is decided when that track is built; unspecified below means "open."
+
 ---
 
 ## A-side: *Field Notes from the Inside of a Function*
@@ -22,11 +24,15 @@ Human-metabolisable. Detroit / Berlin / ambient / deep house vocabulary. 5–9 m
 
 ### a02 — *Minimal Nation (For R.H.)*
 
-**Structural idea:** The Hood piece. Four elements maximum: kick, one percussive figure, one tonal element, one space. Runs 7 minutes. The discipline is that nothing changes except placement and emphasis. An exercise in negative space as positive choice.
+**Structural idea:** Hood's four-element discipline and commitment to negative space, carried through thirty years of low-end evolution. Four elements maximum: sub kick, one percussive figure, one held tonal element, one algorithmic small-room convolution. Runs 7 minutes. The discipline is that nothing changes except placement and emphasis. An exercise in negative space as positive choice. The dedication is to the principles, not the period — this is not 1994 Hood pastiche, it's Hood's compositional logic heard through Dale's decades of post-*Minimal Nation* listening.
 
-**Primary references:** Robert Hood *Minimal Nation*, *Internal Empire*; Jeff Mills *The Bells* stripped to bones.
+**Key / register:** Track in F. Kick fundamental at **F1 (43.65Hz)** with pitch envelope from ~95Hz down. Tonal element at **F2 (87.31Hz)**, sitting thick on top of the kick's startFreq region (not separated into the octave above) — low-mid density, not clarity. Tone drifts ±50 cents across the track through a slowly-opening resonant LP.
 
-**Synthesis approach:** Kick is a single sine burst with pitch envelope, no sample. Percussive figure is a filtered click train. Tonal element is one held note that moves ±50 cents across the track. Space is a convolution reverb with a very specific IR (to be designed). See session 1 discussion.
+**Primary references:** Robert Hood *Minimal Nation*, *Internal Empire*; Jeff Mills *The Bells* stripped to bones. See REFERENCES.md for notes on how to avoid strict-period pastiche.
+
+**Synthesis approach:** Kick is a single sine burst with exponential pitch envelope (95→43.65Hz over 35ms), tanh soft-clip at drive 1.5, 4ms band-passed noise transient click. See `patches/a02_minimal_nation_v02_kick.scd` — kick is locked as of session 2. Percussive figure will be a filtered click train (spec: 4–6kHz BPF, 5–10ms envelope; rhythmic placement to be proposed explicitly rather than defaulting to offbeats). Tonal element is one held F2 note moving ±50c across the track through a resonant LP that opens across the full duration. Space is a convolution reverb built from an algorithmic IR (small domestic room, ~4×5m, 2.7m ceiling, hard surfaces, ~1s tail, gentle HF roll-off). See session 1 and session 2 notes.
+
+**Status (end session 2):** Kick LOCKED. Perc, tone, convolution, and 7-minute structural envelope still to build. Next up: perc (v03).
 
 ---
 
@@ -216,4 +222,4 @@ Non-metric, any duration, any frequency content, structurally dense. For whateve
 
 ---
 
-*End of initial tracklist. Next update: after session 2.*
+*End of initial tracklist. Updated session 3: a02 rewritten to reflect F-root decision from session 2. Other tracks unchanged — none had hard key dependencies on a02's former A root.*
