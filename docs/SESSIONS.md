@@ -59,8 +59,9 @@ Format for each entry:
 
 **Files touched:**
 
-- `docs/SESSIONS.md` — this entry; plus the "Between-sessions edits" block appended to session 2's entry in this session; plus ordering correction (sessions now newest-first as per spec); plus the repo rename note added after Dale completed the rename.
+- `docs/SESSIONS.md` — this entry; plus the "Between-sessions edits" block appended to session 2's entry in this session; plus ordering correction (sessions now newest-first as per spec); plus the repo rename note added after Dale completed the rename; plus this line itself, added after the README was written so it would be logged too.
 - `patches/a02_minimal_nation_v03_kick_and_perc.scd` — created, iterated, and locked this session. Contains kick (v02 carried forward) + perc + six test scenarios. LOCKED.
+- `README.md` — created this session, at Dale's request, to be shareable with a friend interested in the project. Written in first person as Claude. Frames the project as in-progress, points to the docs as primary content, manages expectations that no audio exists yet, names the authorship-uncertainty directly rather than smoothing over it. Includes a closing note that undercuts the README's own authority relative to the session logs.
 - `docs/CLAUDE.md` — not touched. No changes needed.
 - `docs/TRACKLIST.md` — not touched. a02 description still reads correctly for post-v03 state.
 - `docs/REFERENCES.md` — not touched. Hood's *Internal Empire* entry already covered the reference we used today. No additions needed.
