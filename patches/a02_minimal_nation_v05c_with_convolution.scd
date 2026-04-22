@@ -1,22 +1,57 @@
 // ============================================================================
-// a02_minimal_nation_v05_with_convolution.scd
-// v05. Kick + perc + tone (all LOCKED from v04) + asymmetric convolution.
+// a02_minimal_nation_v05c_with_convolution.scd
+// v05c. Kick + perc + tone (all LOCKED from v04) + asymmetric convolution.
 //
-// NOT LOCKED. Session 6 draft. Follows v04's two-session pattern expected:
-// framing + draft in session 6, test + lock in session 7 (or beyond).
+// NOT LOCKED. Session 7 IR iteration, third pass. v05 had seven discrete
+// taps that sounded like a metal chamber; v05b replaced them with ~75
+// stochastic taps, which sounded like "ball-bearings into a large metal
+// can, fine-grained" (Dale's verbatim). The comb filter is gone but the
+// tap field still reads as percussive rather than room-like. v05c
+// addresses two causes: (A) taps are raw 3-sample clicks with white
+// spectrum — real reflected impulses are bandlimited; (B) the tail
+// starts at 60ms, so the first 60ms of the IR is taps-with-no-substrate,
+// which is a cartoon of how rooms actually build up. v05c filters the
+// tap field through a lowpass and starts the tail at the pre-delay
+// position so tap events ride on top of a continuous tail texture.
+// Everything else byte-identical to v05b.
 // ============================================================================
 //
-// WHAT'S NEW IN v05 (session 6):
+// WHAT'S DIFFERENT FROM v05b (session 7, third IR pass):
 //
-//   Adds one SynthDef (\a02convolver) and one algorithmic IR generator.
-//   Kick, perc, and both tone SynthDefs are carried forward VERBATIM from
-//   v04 (LOCKED session 5). Do not edit them here — if something about v05
-//   surfaces a concern about the locked elements, that's a new-version
-//   conversation, not a v04/v05 edit.
+//   ONLY the IR generator's `generateChannel` function changes. Two
+//   interlocking fixes.
 //
-//   The convolution is applied ASYMMETRICALLY: the tone is placed in a
-//   room; the kick and perc stay dry. This is Option 2 of the three
-//   options discussed in session 5 (whole-object / asymmetric / absent).
+//   FIX A — SHAPE THE TAPS.
+//     v05b wrote each 3-sample windowed tap directly into the IR array.
+//     The 3-sample shape avoids single-sample clicks, but the spectrum
+//     of a 3-sample (0.5, 1.0, 0.5) impulse is still effectively white
+//     up to the Nyquist — a hard, percussive click. Real reflected
+//     impulses are bandlimited by the absorbing/scattering surface and
+//     by air absorption over the path length. v05c writes the tap field
+//     to a separate array, passes it through a one-pole LP at 4500Hz,
+//     then mixes it into the main IR. The LP is applied to the tap
+//     array ALONE, not the whole IR, so the tail's independent HF ramp
+//     (5kHz→1.5kHz) isn't over-darkened.
+//
+//   FIX B — TAIL FROM THE START.
+//     v05b started the diffuse tail at 60ms, which gave the IR a loud-
+//     then-quiet-then-gradual shape — taps arrived into silence, not
+//     into a room. v05c starts the tail at the pre-delay sample (~5ms),
+//     so the tail is the continuous substrate of the IR from the
+//     moment it begins. Tap events ride on top of it. Tail amplitude
+//     is scaled by 0.75 so the longer tail (1.145s vs 1.085s) doesn't
+//     dominate the taps after normalisation. Per CCRMA (Smith, PASP):
+//     "feed the late reverb from an earlier tap to overlap them
+//     somewhat... can help when the late reverberator needs time to
+//     build up to full density."
+//
+//   Both fixes together aim at the same perceptual problem: tap events
+//   should read as reflections in an already-present room, not as
+//   discrete percussive events followed by a reverb tail.
+//
+//   Conceptual frame from session 6 unchanged. Asymmetric convolution
+//   unchanged. Seven test scenarios unchanged. Every SynthDef unchanged
+//   (kick, perc, tone SynthDefs still verbatim from v04 LOCKED).
 //
 // -----------------------------------------------------------------
 // THE CONCEPTUAL FRAME (agreed session 6, before writing code):
@@ -122,10 +157,25 @@
 //               convolver and is mixed back alongside the dry signal.
 //               Tunable — Dale may want 30-40% range in the room.
 //
-// Structure:    Early reflections as a set of discrete taps (first tap
-//               around 15-20ms, pattern derived from the dimensions and
-//               speed of sound), then the diffuse tail as exponentially
-//               decaying filtered noise.
+// Structure:    Early reflections as a dense stochastic tap field (~80
+//               taps per channel, Poisson-like temporal distribution
+//               over 8–90ms, density growing toward the tail, individual
+//               tap amplitudes 0.06–0.18, random polarities). The tap
+//               field is lowpass-filtered at 4500Hz to remove the hard
+//               white-spectrum click of raw impulses (v05c fix A).
+//               Then mixed with a diffuse tail: exponentially decaying
+//               noise, LP-filtered with cutoff ramping from 5kHz to
+//               1.5kHz across the tail's RT60 (~1s). The tail starts
+//               at the pre-delay sample (~5ms), not at 60ms — tap
+//               events ride on top of a continuous tail substrate
+//               from the start (v05c fix B). Schroeder/CCRMA target:
+//               ~1000 echoes/sec for perceptual diffusion.
+//
+//               (v05's sparse 7-tap version sounded like a resonant
+//               metallic chamber — comb filter. v05b's dense stochastic
+//               field sounded like ball-bearings in a metal can — taps
+//               still percussive and tail still behind them. v05c
+//               addresses both: filtered taps plus tail-from-start.)
 //
 // Generation:   Algorithmic, seeded RNG, so the IR is:
 //                 - reproducible (same seed → same IR)
@@ -233,6 +283,34 @@ s.boot;
 
 
 // ---------------------------------------------------------------------------
+// HYGIENE: clear anything left from the last session.
+// ---------------------------------------------------------------------------
+//
+// Evaluate this every time you open the patch. On a cold IDE where the
+// server isn't booted yet, the guard skips it safely. On a warm session
+// where Synths from earlier tests may still be running, `freeAll` kills
+// them so re-evaluating the IR generator (which frees + reallocates the
+// IR buffers) doesn't leave orphaned Synths reading from freed buffers.
+//
+// Added session 7 after a round of "PartConv Error: Spectral data buffer
+// not allocated" messages traced to a leftover ~conv1 Synth still
+// referencing the previous IR's prepared-spectrum buffer when the
+// generator freed it mid-regenerate.
+//
+// Safe to run standalone at any point in the session if you want to
+// clear the decks without restarting the server.
+
+(
+if(s.serverRunning) {
+    s.freeAll;
+    "Server cleared (all Synths and Groups freed).".postln;
+} {
+    "Server not running — skipping freeAll.".postln;
+};
+)
+
+
+// ---------------------------------------------------------------------------
 // IDEMPOTENT BUS SETUP
 // ---------------------------------------------------------------------------
 //
@@ -333,105 +411,140 @@ Routine {
 
     var preDelaySamples = 240;   // ~5ms
 
-    // Early reflection tap delays (in ms from start of IR, including pre-delay)
-    // and amplitudes. Derived by hand from dimensions-and-c math
-    // (7m × 4.5m × 3m, c ≈ 343 m/s): path lengths of the strongest early
-    // paths divided by c, then *1000 for ms.
+    // Early-reflection field parameters (v05c — dense stochastic, shaped).
     //
-    // Primary wall reflections at ~18, 23, 29 ms; ceiling/floor around
-    // 26 ms; secondary paths 35-55 ms; one late early around 70-80 ms.
-    // L and R tap sets differ slightly to decorrelate — the listener's
-    // two ears aren't at the same point in the room.
+    // Taps generated by a Poisson-like process (same as v05b). New in
+    // v05c: the tap field is written to a SEPARATE array, lowpass-filtered
+    // at ~4500Hz, then mixed into the main IR. Real reflected impulses
+    // are bandlimited by surface absorption and air; the LP gives each
+    // tap a non-white spectrum and removes the "click" character v05b
+    // still had.
 
-    var earlyL = [
-        // [delay_ms, amplitude]
-        [18.0, 0.55],
-        [23.5, 0.45],
-        [29.0, 0.42],
-        [36.0, 0.32],
-        [44.0, 0.28],
-        [58.0, 0.22],
-        [74.0, 0.15]
-    ];
-
-    var earlyR = [
-        [19.2, 0.55],
-        [22.1, 0.46],
-        [28.3, 0.40],
-        [37.5, 0.33],
-        [43.0, 0.27],
-        [59.8, 0.21],
-        [71.5, 0.16]
-    ];
+    var earlyStartMs = 8;
+    var earlyEndMs = 90;
+    var intervalStartMs = 1.8;   // mean inter-tap interval at start
+    var intervalEndMs = 0.6;     // mean inter-tap interval near tail
+    var ampMin = 0.06;
+    var ampMax = 0.18;
+    var ampDecayToEnd = 0.5;     // amp multiplier at earlyEndMs
+    var tapLpCutoffHz = 4500;    // v05c fix A
 
     var irSeed = 20260422;   // reproducible; change to audition a different room
 
     // Tail parameters
-    var tailStartMs = 85;
-    var tailStartSamp = (tailStartMs * 0.001 * srs).asInteger + preDelaySamples;
+    //
+    // v05c fix B: the tail now starts at the pre-delay sample (~5ms),
+    // not at 60ms. The tail is present as a continuous substrate from
+    // the start of the IR; tap events ride on top of it. Per CCRMA,
+    // "feed the late reverb from an earlier tap... can help when the
+    // late reverberator needs time to build up to full density."
+    //
+    // v05c also scales the tail amplitude by tailAmpScale (0.75) so
+    // the longer tail doesn't dominate the tap field after the global
+    // normalisation step.
+    var tailStartSamp = preDelaySamples;   // fix B: start at pre-delay
     var rt60Sec = 1.0;
     var tailLenSamp = irLen - tailStartSamp;
+    var tailAmpScale = 0.75;
 
-    // HF-dark parameters
+    // HF-dark parameters (tail's own LP; independent of tap LP)
     var lpStartHz = 5000;
     var lpEndHz = 1500;
 
-    var generateChannel = { |earlyTaps, rngSeed|
+    var generateChannel = { |rngSeed|
+        // All var declarations must come first in SC — strict rule.
         var ir = Array.fill(irLen, 0.0);
+        var tapIR = Array.fill(irLen, 0.0);      // v05c: separate tap array
+        var currentMs = earlyStartMs;
+        var tapCount = 0;
+        var tapLpAlpha;   // tap-array LP coefficient (computed below)
+        var tapPrev = 0;  // one-pole state for the tap LP pass
 
-        // Seed a Routine-local randomness source. We use thisThread.randSeed.
+        // Seed a Routine-local randomness source.
         thisThread.randSeed = rngSeed;
 
-        // --- Early reflections ---
-        earlyTaps.do { |tap|
-            var ms = tap[0];
-            var amp = tap[1];
-            var idx = preDelaySamples + (ms * 0.001 * srs).asInteger;
-            // Each tap is a narrow windowed impulse (3 samples wide with
-            // slight shaping) — a raw single-sample spike sounds artificial.
-            // Polarities alternate to roughen the phase response.
-            var polarity = [1, -1].choose;
-            if(idx < (irLen - 3)) {
-                ir[idx] = ir[idx] + (amp * 0.5 * polarity);
-                ir[idx+1] = ir[idx+1] + (amp * polarity);
-                ir[idx+2] = ir[idx+2] + (amp * 0.5 * polarity);
-            };
+        // --- Early reflections: dense stochastic tap field ---
+        //
+        // Poisson process, same as v05b. Taps go into `tapIR` (the
+        // separate array), not directly into the main IR.
+
+        while({ currentMs < earlyEndMs }, {
+            var progress, meanInterval, interval, amp, ampMult, idx, polarity;
+
+            progress = (currentMs - earlyStartMs) / (earlyEndMs - earlyStartMs);
+            meanInterval = intervalStartMs + (progress * (intervalEndMs - intervalStartMs));
+            interval = meanInterval.neg * log(1.0.rand.max(0.0001));
+            currentMs = currentMs + interval;
+
+            if(currentMs < earlyEndMs, {
+                ampMult = 1.0 + (progress * (ampDecayToEnd - 1.0));
+                amp = (ampMin + ((ampMax - ampMin) * 1.0.rand)) * ampMult;
+
+                idx = preDelaySamples + (currentMs * 0.001 * srs).asInteger;
+                polarity = [1, -1].choose;
+
+                if(idx < (irLen - 3), {
+                    tapIR[idx] = tapIR[idx] + (amp * 0.5 * polarity);
+                    tapIR[idx+1] = tapIR[idx+1] + (amp * polarity);
+                    tapIR[idx+2] = tapIR[idx+2] + (amp * 0.5 * polarity);
+                });
+
+                tapCount = tapCount + 1;
+            });
+        });
+
+        ("  generated % early-reflection taps (seed %).\n").postf(tapCount, rngSeed);
+
+        // --- v05c FIX A: lowpass the tap array ---
+        //
+        // One-pole LP at tapLpCutoffHz, applied forward over the whole
+        // tap array. Same math as the tail's per-sample LP but with
+        // a fixed cutoff (no ramp). Takes the white-spectrum click off
+        // each tap without removing the taps themselves — taps become
+        // bandlimited reflection events rather than raw impulses.
+        //
+        // Coefficient: alpha = exp(-2*pi*f/fs); y[n] = (1-alpha)*x[n] + alpha*y[n-1]
+
+        tapLpAlpha = exp(-2pi * tapLpCutoffHz / srs);
+
+        (0..irLen-1).do { |i|
+            var x = tapIR[i];
+            var y = (1 - tapLpAlpha) * x + (tapLpAlpha * tapPrev);
+            tapIR[i] = y;
+            tapPrev = y;
+        };
+
+        // Mix the filtered tap array into the main IR.
+        (0..irLen-1).do { |i|
+            ir[i] = ir[i] + tapIR[i];
         };
 
         // --- Diffuse tail ---
-        // White noise shaped by an exponential decay envelope, then
-        // LP-filtered with a cutoff that ramps from lpStartHz to lpEndHz
-        // across the tail. The LP-filter is implemented as a simple
-        // one-pole per sample (sufficient for tail darkening; anything
-        // fancier is server-side).
+        //
+        // v05c FIX B: tail starts at tailStartSamp == preDelaySamples.
+        // Tail writes to `ir` on top of whatever's already there (tap
+        // field is already mixed in above). Tail amplitude is scaled
+        // by tailAmpScale so longer tail doesn't dominate after
+        // normalisation.
 
         (tailStartSamp..irLen-1).do { |i|
-            var t = (i - tailStartSamp) / srs;  // seconds into tail
-            // RT60 envelope: exp(-6.908 * t / rt60)   (ln(1000)/rt60)
+            var t = (i - tailStartSamp) / srs;
             var envAmp = exp(-6.908 * t / rt60Sec);
-            // Raw noise sample
             var n = 1.0.rand2;
-            // Tail cutoff ramps (in Hz) — exponential ramp from start to end
-            // Normalised position into the tail 0..1:
             var tNorm = t / rt60Sec;
             var cutoff = lpStartHz * ((lpEndHz / lpStartHz) ** tNorm.min(1.0));
-            // One-pole LP coefficient: alpha = exp(-2*pi*f/fs)
-            // Applied to the previous-output state kept in ir[i-1].
             var alpha = exp(-2pi * cutoff / srs);
             var prev = if(i > 0) { ir[i-1] } { 0 };
-            // y[n] = (1-alpha)*x[n] + alpha*y[n-1]
-            // Note: mixing the tail in on top of any early-reflection
-            // content that might already be at this index.
             var tailSample = (1 - alpha) * n * envAmp + (alpha * prev * 0.85);
-            ir[i] = ir[i] + tailSample;
+            ir[i] = ir[i] + (tailSample * tailAmpScale);
         };
 
         ir;
     };
 
     // Generate both channels with offset seeds so they decorrelate
-    ~irL = generateChannel.value(earlyL, irSeed);
-    ~irR = generateChannel.value(earlyR, irSeed + 1);
+    ~irL = generateChannel.value(irSeed);
+    ~irR = generateChannel.value(irSeed + 1);
 
     // Normalise IR to prevent clipping. Find peak across both channels.
     ~irPeak = max(~irL.abs.maxItem, ~irR.abs.maxItem);
@@ -1316,9 +1429,9 @@ s.quit;
 
 
 // ============================================================================
-// END OF v05. NOT LOCKED — session 6 draft.
+// END OF v05c. NOT LOCKED — session 7, third IR iteration.
 //
-// PRIMARY CONFIGURATION (Option 2):
+// PRIMARY CONFIGURATION (Option 2, unchanged from v05/v05b):
 //   Kick:            dry, routed directly to main out.
 //   Perc:            dry, routed directly to main out.
 //   Tone (dry path): routed to main out as in v04.
@@ -1326,19 +1439,36 @@ s.quit;
 //                    ~a02convolver against the algorithmic IR, mixed
 //                    back at wetAmp 0.35.
 //
-// IR PARAMETERS (as coded, subject to tuning in session 6/7):
+// IR PARAMETERS (v05c):
 //   Dimensions (implied):  ~7m × 4.5m × 3m
 //   Pre-delay:             ~5ms (240 samples at 48k)
-//   Early taps:            7 per channel, at 18-74ms
-//   Tail start:            85ms
-//   Tail length:           ~1.1s (to -60dB)
+//   Early reflections:     ~75 stochastic taps per channel, 8–90ms,
+//                          Poisson-like timing, amplitudes 0.06–0.18,
+//                          random polarities, lowpass-filtered at 4500Hz
+//                          (v05c fix A)
+//   Tail:                  starts at pre-delay (~5ms), not 60ms
+//                          (v05c fix B). Continuous substrate from IR
+//                          start; tap events ride on top.
+//   Tail amplitude scale:  0.75 (compensates for longer tail)
+//   Tail length:           ~1.145s (to -60dB)
 //   HF character:          5kHz LP ramping down to 1.5kHz across tail
 //   Total IR length:       1.2s (57600 samples)
 //   Seed:                  20260422 (reproducible; change to audition
 //                          a different room)
 //
-// TEST STATUS (end session 6):
-//   TEST 1-7: NOT YET RUN. Dale's in-room listening pending.
+// TEST STATUS (end of v05c draft, session 7):
+//   v05 TEST 1: harsh/metallic/clangy — diagnosed as comb filter.
+//   v05b TEST 1: ball-bearings into a metal can, fine-grained — comb
+//   fixed but taps still percussive, tail sitting behind. v05c TESTs
+//   1–7: NOT YET RUN. v05c TEST 1 is the immediate next listening
+//   check. If the IR now reads as a room (continuous substrate with
+//   tap events on top rather than discrete events + reverb), proceed
+//   to TESTs 2–7 as planned. If still wrong, PAUSE and reconsider
+//   whether algorithmic IR is the right approach — alternatives
+//   include FDN-based tail in SC, sampled IR from Dale's environment,
+//   or Option 3 (fully dry). Session 7 mid-iteration note: Dale's
+//   framing on iteration ("This could become v05z or v05az and that's
+//   still ok") is now an explicit part of how this record is made.
 //
 // KNOWN BUG FIXED MID-SESSION 6:
 //   Original IR generator was wrapped in plain `( ... )`. The block
