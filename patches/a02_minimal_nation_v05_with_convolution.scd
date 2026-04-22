@@ -445,6 +445,54 @@ Routine {
         if(i.even) { ~irL[i / 2] } { ~irR[(i - 1) / 2] }
     });
 
+    // ------------------------------------------------------------------
+    // Session 8 — render IR to disk for spectrogram inspection.
+    //
+    // Writes the 2-channel interleaved IR to a .wav file under
+    // recordings/. Lets us inspect the IR visually in Sonic Visualiser,
+    // because symptom descriptions ("metal can", "ball-bearings")
+    // stopped narrowing the diagnostic space in session 7 and Claude
+    // can process images but not audio.
+    //
+    // This is a diagnostic addition, NOT a change to the IR itself or
+    // to how PartConv is prepared downstream. The render writes a
+    // parallel copy of the same data that's about to be loaded into
+    // the L/R PartConv buffers. Runtime behaviour of the patch is
+    // identical with or without this block.
+    //
+    // Framed as a hypothesis test (CLAUDE.md session 7 "On the
+    // experimental posture"). If spectrograms close the diagnostic
+    // gap enough to propose useful fixes, this block stays and moves
+    // into project convention. If they don't, negative result, and
+    // this block gets removed in session 9 cleanup.
+    //
+    // Path: computed relative to this .scd file's location, so it
+    // works regardless of where SC was launched from.
+    // thisProcess.nowExecutingPath returns the patch file's path;
+    // parentPath gives patches/; +/+ "../recordings/..." resolves to
+    // the repo-level recordings/ folder.
+    //
+    // Format: 32-bit float WAV. Not 16-bit PCM — the IR has a ~0.9
+    // peak and a quiet decaying tail; quantisation noise floor would
+    // alias into the tail's spectral structure in the spectrogram and
+    // be indistinguishable from real IR content. Float preserves the
+    // IR exactly as generated.
+    //
+    // Two s.syncs: loadCollection is async (server receives the
+    // array), write is async (server flushes to disk before we
+    // free the transient buffer). Both need the Routine's yielding
+    // context, which is already present.
+    // ------------------------------------------------------------------
+
+    ~renderBuf = Buffer.loadCollection(s, ~irInterleaved, numChannels: 2);
+    s.sync;
+    ~renderPath = PathName(thisProcess.nowExecutingPath).parentPath
+        +/+ "../recordings/a02_v05_ir.wav";
+    ~renderBuf.write(~renderPath, "wav", "float");
+    s.sync;
+    ("IR written to: " ++ ~renderPath).postln;
+    ~renderBuf.free;
+
     // Free any previous buffers (in case this block is re-evaluated)
     ~irBuf !? { ~irBuf.free; ~irBuf = nil };
     ~irBufL !? { ~irBufL.free; ~irBufL = nil };
