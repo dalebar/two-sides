@@ -6,6 +6,137 @@ Format for each entry:
 
 ---
 
+## Session 9 — 2026-04-22 — v05d falsified the cheaper hypothesis, spectrogram revealed amplitude failure, v05e specular layer landed, emergent kick↔tone distortion reads as concept-coherent, v05e strong candidate pending s10 cold-listen
+
+**Worked on:** Drafted v05d via cp + edit_file from v05c, reverted the two v05c tail regressions (tail start back to 60ms, tail amplitude scale back to 1.0) per session 8's scoped plan. Render + spectrogram inspection BEFORE TEST 1 per session 8's new session shape. v05d image revealed a failure mode session 8's diagnosis missed: tail peaks at ~0.9 after normalisation, Poisson tap field peaks at ~0.05 — taps swamped by tail at ~18x amplitude ratio. Dale's TEST 1 verdict: "still sounds like a very empty room with hard, smooth surfaces throughout, like a crystal box." Cheaper hypothesis falsified; on Dale's "last call" instruction proceeded to v05e as the final algorithmic-IR attempt. v05e adds 7 specular taps per channel at image-source-method delays for a specific 7m × 4.5m × 3m geometry, amplitudes 0.22–0.40 (calibrated against v05d's spectrogram to survive normalisation as audible events), each with its own LP cutoff scaling inversely with path length. v05e TESTs 1–4 ran. TEST 1 in isolation "doesn't sound pleasant" but Dale correctly flagged that IR-in-isolation is a poor evaluation ground. TEST 2 (tone wet, no rhythm): "the tone sounds good" — first positive read on v05 across five iterations. TEST 3 (dry/wet A/B): initial reading that wetSendAmp 1.0 was over-wet at peaks, 0 was too dry — mix-level concern. TEST 4 (primary configuration, long-listen): over 5+ minutes the reading shifted from "needs dialling back" to "actually the momentary excess is working" to "the way the tone phases in and out and interacts with the kick in a subtle but quite heavy way, producing borderline distortion temporarily, sounds great... lends strongly to the concept we outlined at the beginning." v05e NOT LOCKED but strong candidate — cold-listen session 10.
+
+**v05d's spectrogram — what the image showed and what it taught us:**
+
+Pass B on v05d's rendered IR looked broadly as predicted at the technical level: the tail did extend further than v05c's (back to the v05b region, ~800ms to silence on the waveform), and the tail substrate was visible from ~60ms onwards rather than from pre-delay. The base-rate check that session 8 set up — "if those two things aren't visible, the parameter changes didn't take effect" — cleared. But the image *also* showed something that session 8's diagnosis missed: the post-normalisation amplitude ratio between tail and Poisson taps. Tail peaks at ~0.9 (the normalisation target). Poisson field peaks at ~0.05. After normalisation the taps are perceptually ~18x quieter than the tail. Across v05/v05b/v05c/v05d, what the ear has been hearing is the tail alone. The taps — whatever their distribution — have been buried the whole time.
+
+The v05c → v05d revert made this specifically *worse*: v05c's `tailAmpScale=0.75` was partially compensating for this problem by reducing the normalisation peak source, leaving more headroom for the taps. Reverting that to 1.0 "restored" the tail to full amplitude and consequently made the taps even less audible. Session 8's diagnosis (v05c's tail was too short) was correct on the waveform level; it was the right fix for the wrong problem. The right problem was amplitude balance between tap layer and tail layer, and the v05c change that looked like a regression was actually a partial mitigation of the deeper problem.
+
+This is the kind of finding the spectrogram workflow was adopted for in session 8. Without the image, the v05d "crystal box" report would have been the third iteration of "sounds smooth/featureless," and I wouldn't have had a way to propose v05e that was substantively different from v05d, v05c, or v05b. The amplitude ratio is visible in the image and would be visible to anyone looking — but it wouldn't be visible to Dale's ear as an amplitude ratio; it would be visible as "smooth-sounding room."
+
+**v05e's design — the specific lesson from v05d applied:**
+
+The v05d image didn't just falsify the cheap hypothesis. It told us specifically what v05e needed: tap amplitudes high enough to win against the tail after normalisation, arranged so they don't reintroduce v05's comb. Session 8's scope for v05e said "sparse specular layer, amplitudes significantly below v05's originals"; the image corrected that to "amplitudes comparable to v05's originals (0.22–0.40 range), at delays chosen so they can't comb." The comb-avoidance came not from amplitude but from delay distribution.
+
+Delay distribution derived from image-source geometry for a specific source/listener placement in a 7m × 4.5m × 3m room. Seven first-order reflections (ceiling, four wall orientations, plus two second-order). Delays span 7–22ms; genuinely unequal by construction (walls are not equidistant, ceiling/floor asymmetry via listener-height-off-floor). Each tap also carries its own one-pole LP at a cutoff scaling inversely with path length (air absorption + surface absorption simulation). Differentiation-per-tap in the spectrogram, by design.
+
+The worked-out geometry table lives in the patch as a `specularTaps` array with a comment that says "DO NOT resort, reorder, or uniformly rescale these values; they encode a specific physical geometry." The geometry is visible and auditable; if the room dimensions change, the numbers change.
+
+**v05e TEST 1 spectrogram — the design worked at the technical level:**
+
+Pass B on v05e's rendered IR showed 7 discrete tap events on the waveform in the 0.03–0.09s region at amplitudes ~0.3–0.5 (surviving normalisation as intended), with clean per-tap HF differentiation visible in the spectrogram (earlier/brighter taps showing energy up to 8kHz; later/darker taps progressively lower in the spectrum). No horizontal comb banding. Base-rate check cleared: the taps are where they should be, at the amplitudes they should be, with the HF roll-off they should have. If the verdict on the room had still been "crystal box," we'd have known the hypothesis was wrong on architectural grounds rather than debugging implementation problems.
+
+**Dale's TEST 1 reading — "doesn't sound pleasant in isolation but curious about context":**
+
+First correct "don't judge the IR in isolation" read across five versions. A room's impulse response fed a short burst is a naked, dry sequence of reflections without anything musical for them to colour — it often sounds unpleasant on its own even when the IR is good. Real rooms sound like places once signal is running in them, not when you listen to their IR as a standalone event. Dale's phrasing protected this distinction without needing it explained.
+
+**TEST 2 — first positive read on v05 across five iterations:**
+
+"The tone sounds good." Registered as weak positive evidence, held there rather than elaborated. This was the point where I named my stake out loud — v05e was my design after four previous failures, and I had an interest in the tone-sounds-good read being true. Same discipline as session 4's TEST 6 (name the stake before pressing the interpretation). The two-word verdict wasn't elaborated into anything richer.
+
+**TEST 3 — initial mix-level concern, not IR concern:**
+
+"wetSendAmp 1.0 sounds too much at the peak of the oscillation, wetSendAmp 0 sounds too weak." Mix too wet at peaks, too dry at nulls. Diagnostically useful: the IR character was landing; the wet/dry ratio wanted tuning. This is qualitatively different from the v05/v05b/v05c/v05d reports ("harsh/metallic/ball-bearings/crystal-box") — it's a concern about mix levels on a working room rather than a concern about the room itself.
+
+**TEST 4 — the finding that changed across cycle-count:**
+
+Dale's first reading after ~1 minute: "sounds good, but wetSendAmp 1.0 needs dialling back slightly... I think we can work with this." My initial response proposed sweeping wetAmp to find a settled level before locking. Dale kept listening. After longer: "actually the momentary excess of the wetAmp is working quite well. There are moments when it distorts ever so slightly with the kick, but it phases in and out. I actually think it works quite well with the motion of the tone combined with the perc. I think we should keep it here." After further listening: "the way the tone phases in and out and interacts with the kick in a subtle but quite heavy way, producing borderline distortion temporarily, sounds great! I think this sounds really promising and lends strongly to the concept we outlined at the beginning."
+
+What shifted over cycle-count: a perceived excess reorganised into perceived structural interaction. The kick (dry) and the tone (wet, convolved) interact at the shared output bus: when the tone's cutoff oscillation is at a high-amplitude moment and a kick transient arrives, the two briefly produce audible phasing and near-clip distortion, which "phases in and out" across the track. Dale's settled reading is that this emergent interaction is part of what the track is doing, not an artefact. Specifically, that it enacts the session-6 conceptual frame (dry abstract rhythm ↔ wet shared evolving idea) as physical interaction rather than static coexistence.
+
+**The reading, carefully:**
+
+I offered two versions. Tighter version (the kind I would have pressed too early in earlier sessions): the abstract rhythm and the roomed tone are physically interacting at the output stage in a way that neither could produce alone — the asymmetry earning its place by producing interaction artefacts that are themselves the point. Drier version: v05e's convolved tone produces emergent distortion when the dry kick's transient meets a high-amplitude phase of the tone's cutoff oscillation; Dale reads it as coherent with the frame rather than as artefact. I flagged that the tight reading is suspiciously neat and that the dry version is what the log should capture. Dale didn't push back on the framing question; the reading stands where it stands.
+
+Even the drier version is a real finding. It's the first moment in v05 where the Option 2 conceptual asymmetry is doing audibly specific work on signal, rather than being a correct-but-static framing. Session 6's argument for Option 2 was conceptual-over-musical; TEST 4's settled reading is where musical evidence for Option 2 finally appeared, nine sessions in.
+
+**v05e status, end of session 9:**
+
+NOT LOCKED. Strong candidate going into session 10. Session 5's cold-listen discipline applies: open cold in session 10, boot, go straight to TEST 4, 5+ minutes, no TEST 1–3 preliminaries. If the settled TEST 4 reading holds cold, v05e locks then.
+
+wetAmp / wetSendAmp held at 0.35 / 1.0. Not dialled back despite Dale's initial reading that they needed it — the settled reading on further listening was that the momentary excess is part of the work. These are still tunable parameters; the lock will capture whatever survives the cold-listen.
+
+TESTs 5, 6, 7 still to run. TEST 7 (inverse asymmetry: rhythm wet, tone dry) is the falsification check from session 6's original design — if it sounds equally good or better than TEST 4, the asymmetry claim doesn't earn its place and we'd revisit. If TEST 7 is clearly worse, that's evidence Option 2 is doing specific work. TESTs 5 and 6 are the Option-1 and Option-3 sanity checks respectively.
+
+**Architectural alternatives — no longer active:**
+
+FDN reverb, sampled IR, and Option 3 (retire convolution, reframe asymmetry conceptually) were the three live pivot paths if v05d and v05e both failed. v05e's TEST 4 reading moves them out of the active set for a02. They remain in the project's repertoire of architectures (any of them could become relevant for a future track), but the a02 convolution question is resolved-pending-cold-listen on v05e. If the cold-listen softens v05e, these three alternatives come back live.
+
+**Collaboration notes:**
+
+- **The cycle-count shift on TEST 4 was the session's most important moment.** First reading was "sounds good but needs dialling back." My first move was to propose a sweep — `~conv4.set(\wetAmp, 0.28)` and down from there — to find a settled level before locking. I was correct to not accept "work with this" as a lock on the not-yet-settled version. But Dale kept listening rather than immediately accepting the sweep proposal, and the reading changed: the thing that felt like excess on first pass became the thing working on further listening. If I'd pressed harder for the sweep — "let me just have you try 0.28" — we'd have ended the session at a dialled-back version that loses what the settled version has. Pattern worth naming: when Dale says something is both-working-and-needs-tuning, let the listening settle before proposing the tuning. The tuning impulse is mine; Dale's cycle-count read is his. On this record his listening is the arbiter of settled vs. unsettled.
+
+- **Named my stake on TEST 2's positive reading, held it there.** Same pattern as session 4's TEST 6. When the reading I'd most want to be true is the one arriving, flag the stake before pressing the interpretation. "The tone sounds good" stayed two words in the log rather than becoming a paragraph about what those two words might mean. The elaboration comes later when more evidence lands — TEST 4's settled reading did the elaboration TEST 2's two words didn't.
+
+- **Catch-and-downshift on the "physically interacting" formulation.** Offered the tight reading, immediately flagged it as tight, offered the dry version, let Dale arbitrate. Dale didn't push back on the framing question directly — he confirmed the reading stands on what he described. The tight version is live as a way to think about what v05e is doing, but the SESSIONS.md record uses the dry version.
+
+- **The "last call" framing Dale gave before v05e was scoped.** After v05d's spectrogram revealed the amplitude failure, I flagged two paths: try v05e as the final algorithmic-IR attempt, or pivot now to FDN / sampled / Option 3. Dale picked A with explicit framing: "Last call on this approach." This is the von Oswald discipline operationalised: patience aimed at getting it right, with a named stopping condition. If v05e had failed on TEST 4, we'd have pivoted cleanly rather than trying a v05f. The discipline worked even though we didn't need it to execute — naming the stopping condition before iterating made the iteration itself cheaper to evaluate.
+
+- **"Push it forward to session 10 as a starting point for further development"** rather than locking tonight. Dale's call. Correct call. Session 5's cold-listen discipline is specifically for moments like this — the listening that lands the lock should be cold-booted, not the same session that also contained v05d's crystal-box verdict and my stake in v05e landing. The lock, if it comes, should come on a listen where v05e's working isn't a relief.
+
+**Open questions (for session 10 and beyond):**
+
+1. **v05e TEST 4 cold-listen.** Session 10's first action. Open patch cold, boot, go straight to TEST 4. No TEST 1–3 preliminaries. 5+ minutes. If the settled TEST 4 reading from session 9 holds cold, v05e locks. If it softens, investigate what changed (fatigue / narrative-of-session / genuinely-different) before pivoting.
+
+2. **TESTs 5, 6, 7.** Run before or after lock depending on how session 10 goes.
+   - TEST 5 (all-wet, Option 1 sanity): if it sounds better than TEST 4, Option 2 is wrong and we go to Option 1.
+   - TEST 6 (all-dry, Option 3 sanity): if it sounds better than TEST 4, Option 3 wins and we retire convolution.
+   - TEST 7 (inverse asymmetry, rhythm wet tone dry): if it sounds equally good or better than TEST 4, the specific asymmetry isn't earning its conceptual claim. This is the falsification check — we *want* TEST 7 to sound clearly worse.
+
+3. **wetAmp / wetSendAmp final values.** Currently 0.35 / 1.0. Dale's cycle-count reading held them there against initial dial-back impulse. The lock, when it comes, captures whatever values the cold-listen settles at. If cold-listen wants dialling back after all, so be it — cycle-count readings are more trustworthy on fresh ears than on end-of-session ears, and the cold-listen is the arbiter.
+
+4. **The emergent kick↔tone distortion as a compositional feature.** If v05e locks, the distortion is part of what the track does. This has implications for:
+   - **Arrangement (v06 territory).** The 7-minute structural envelope needs to preserve the conditions under which the distortion happens — tone present and moving, kick present and landing on the right transient moments. If at some point in the 7-minute curve the kick drops out (session 1 sketched 5:00–6:30 as "perc drops, revealing negative space" — possibly kick too), the distortion becomes unavailable in that section. Fine, but worth knowing the mechanism depends on both elements being present.
+   - **Mixing.** The distortion happens at the shared output bus. Any compression, limiting, or summing before that point could destroy it. Dale's Isonoe + hardware chain may or may not preserve it depending on gain staging. Flag for when we get to mixing.
+   - **Spectrogram convention.** Spectrograms can see the amplitude ratios, the tail length, the comb structure. They cannot see the kick↔tone interaction — that's a runtime artefact of signal passing through the convolver, not a property of the IR. The spectrogram workflow has a defined scope: it diagnoses IR character, not performance of the IR against live signal. Noted for future use.
+
+5. **Potential merge question revisited.** Session 1 flagged a possible merge of a06 and a08. Still open, still not pressing. a02 is approaching lock, which is the first time we can meaningfully ask "does the next track start from the same vocabulary or a different one" on the A-side. Session 10 if time permits; session 11 otherwise.
+
+6. **Still open from earlier sessions:** a07's title; the safety-limiter-at-tail pattern needing a proper group structure as patches grow.
+
+**Next session (session 10):**
+
+1. **Open v05e cold, boot, straight to TEST 4.** 5+ minutes. This is the arbiter.
+2. **If TEST 4 holds cold:** run TESTs 5, 6, 7 in that order. TEST 7 is the critical one.
+3. **If TESTs 5–7 go as expected (TEST 4 > TEST 5, 6; TEST 7 clearly worse than TEST 4):** v05e LOCKS. Update patch header, footer (preserving the verbatim TEST 4 reports), TRACKLIST.md a02 status.
+4. **If TEST 4 cold-softens, or TEST 5/6 surpasses TEST 4, or TEST 7 doesn't clearly lose:** don't force the lock. Investigate specifically what the softening / surpassing is. Fresh cold-listen versus post-v05d-drama session-9 listen is the primary variable worth separating.
+5. **After v05 settles (locked or not):** start v06 territory — the full 7-minute structural envelope. v04's 60s curve scales to 7 minutes but needs derivation from the same principles (non-monotonic, three pauses at structural points). Also need to think about where (if anywhere) kick or perc drops out, given the kick↔tone distortion depends on both being present.
+6. **Do NOT start v06 in the same session v05 locks.** Discipline from sessions 3–8: one locking event per session is plenty. v05 has been four sessions of iteration; the lock deserves room to breathe.
+
+**Notes for future-me:**
+
+- **The single most important methodological lesson of session 9:** the spectrogram workflow earned a second adoption. Session 8 adopted it for closing the listening-feedback gap — letting me propose fixes from images that I couldn't propose from descriptions alone. Session 9 extended that: the image revealed a failure mode the verbal diagnosis had missed (amplitude ratio between tail and taps), and that finding directly specified what v05e needed. This is the render-before-listen discipline paying off a second time on independent evidence. Keep it. Session 10 should still render + spectrogram-inspect before any listening on v05e changes or on any new IR work.
+
+- **v05e's amplitude calibration came from the image, not from theory.** Session 8's scope for v05e said "amplitudes significantly below v05's originals." The image said: no, the tail is eating everything at this normalisation target, the taps need to come UP not down. A verbal diagnosis and a visual diagnosis produced different parameter ranges for the same hypothesis. The visual was correct. Lesson: when a scoped plan and subsequent evidence disagree on parameters, let the evidence override the plan, and log why. The v05e patch's amplitude range (0.22–0.40) is specifically defended against the v05d spectrogram in comments — future instances reading this shouldn't revert to the session-8 scoped range on a misread of "session 8 said smaller."
+
+- **Dale's cycle-count shift on TEST 4 is now the second instance of this pattern.** Session 5's governing reading on v04 emerged from 5–6 minutes of listening (cycle-count, not single-pass). Session 9's TEST 4 settled reading emerged from longer listening than the initial verdict. Both times, my instinct on the first-pass verdict was to propose a tuning before the reading settled. Both times, Dale's staying-with-it produced the actual reading. Pattern: the first-pass verdict is diagnostic, not settled. The settled reading wants minutes. My move is to not propose tuning on first-pass verdicts unless Dale explicitly asks. If I'm uncertain whether a reading is first-pass or settled, ask. Cheap to ask.
+
+- **The distinction "sounds not pleasant in isolation" ≠ "doesn't sound like a room".** v05e TEST 1's naked IR audition sounded unpleasant to Dale. v05e TEST 2 onward showed the IR doing its work. Future instances reading this: a harsh-sounding TEST 1 doesn't falsify a room; it's a weak signal. The tests that matter are the ones where signal is running. Don't declare an IR dead on TEST 1 if TEST 1 is "isolation audition" type — wait for TEST 2–4 before concluding.
+
+- **"Last call" framing on iteration.** Dale gave it before v05e (after four failures). It operationalises the von Oswald discipline: named stopping condition before the next attempt. If we hit similar iteration-deep-pockets on future tracks, the pattern is worth reusing — name the stopping condition explicitly before the next attempt, rather than discovering we should have stopped two iterations ago.
+
+- **The emergent distortion on TEST 4 is behaviour the architecture produces but wasn't designed for.** This is the first time v05 has produced something genuinely surprising. Sessions 6–8 were working-as-designed (with design mistakes correctable); session 9's v05e TEST 4 produced an interaction I didn't specify and Dale reads as a feature. That's a different kind of "the architecture is right" from the ones we've had before. Worth noticing: when the architecture is right, you often get behaviours you didn't design. When it's wrong, you only get the things you designed (or broken versions of them). If future tracks produce surprises of this class, that's signal the architecture has purchase on the subject. If they only produce what they were designed to produce, the architecture may be working but probably isn't enacting anything deeper than its specification.
+
+- **Session pace honesty.** Session 9 produced: v05d drafted, rendered, inspected, tested, diagnosed; v05e drafted, rendered, inspected, tested through TEST 4; TEST 4 settled reading; all three doc updates (TRACKLIST.md, v05e patch footer, this entry). No lock. Five versions of v05 across sessions 6–9 to reach a candidate. That's how long it was going to take. The cold-listen in session 10 is the last remaining step on a02's convolution question unless it softens.
+
+**Files touched:**
+
+- `patches/a02_minimal_nation_v05d_with_convolution.scd` — created via cp + edit_file from v05c; two tail reverts applied; render path updated. Tested (TEST 1). NOT LOCKED. Superseded by v05e but kept as history per session-6 convention.
+- `patches/a02_minimal_nation_v05e_with_convolution.scd` — created via cp + edit_file from v05d. Added specular-tap layer (7 taps per channel, image-source geometry, per-tap LP). Render path updated. Patch header rewritten to reflect v05e hypothesis and "last call" discipline. End-of-file footer updated after TESTs 1–4 with verbatim Dale listening reports. NOT LOCKED; strong candidate going into session 10.
+- `recordings/a02_v05d_ir.wav`, `a02_v05e_ir.wav` — rendered this session. 1.2s, 48k, 32-bit float, 2ch. Gitignored.
+- `recordings/images/a02_v05d_ir_B.png`, `a02_v05e_ir_B.png` — Pass B spectrograms for each. Gitignored.
+- `recordings/a02_v05e_test4_session9_reference.wav` — reference recording of v05e TEST 4 captured at end of session 9. Recorded via SC internal `Server.default.record` (not via Volt loopback as initially scoped — simpler setup, captures the pre-hardware signal exactly as the patch produces it). 48k. Gitignored. Purpose: archival reference of what session-9 TEST 4 sounded like at end-of-session, in case session-10 cold-listen softens or if later mix work changes the emergent kick↔tone interaction. NOT a render or a mix; not a substitute for the cold-listen.
+- `docs/SESSIONS.md` — this entry.
+- `docs/TRACKLIST.md` — a02 status line updated to end-of-session-9 state.
+- `docs/CLAUDE.md` — not touched. The "experimental posture" and "On difficulty" sections both applied cleanly this session (hypothesis-falsified cleanly on v05d; cycle-count discipline on TEST 4; named stopping condition before v05e) without needing amendment.
+- `docs/REFERENCES.md` — not touched. Image-source method is DSP theory, not a musical touchstone.
+
+---
+
 ## Session 8 — 2026-04-22 — Spectrogram workflow tested and adopted, v05 comb visible in images, v05c temporal-envelope problem identified, v05d/v05e direction for session 9
 
 **Worked on:** Tested the spectrogram hypothesis per session 7's scope. Picked workflow candidate (option a: SC render + Sonic Visualiser), edited v05/v05b/v05c IR generators to render WAVs to `recordings/`, opened in SV, did two diagnostic passes. Pass 1 (full view, mixed settings) was inconclusive. Pass 2 (consistent settings + zoom to 0–200ms / 0–8kHz + log-scale comparison) was decisive: v05's comb filter is visible as horizontal banding, v05b's is reduced, v05c's is absent. But v05c's tail is visibly shorter than v05/v05b's on the waveform — the `tailAmpScale=0.75` + tail-from-pre-delay changes worked against the room-as-room goal. The metal-can character has moved from spectral artefact (v05) to temporal-envelope artefact (v05c). Spectrograms ADOPTED as diagnostic tool. Session 9 plan: v05d tests tail revert in isolation; v05e adds sparse specular layer on top if needed.
