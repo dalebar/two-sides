@@ -2,8 +2,8 @@
 // a02_minimal_nation_v04_kick_perc_and_tone.scd
 // v04. Kick + perc (LOCKED from v03, unchanged) + tonal element SynthDefs.
 //
-// NOT LOCKED. This is an exploration version. Tonal element decisions
-// open for iteration. See header-block below.
+// LOCKED session 5 after cold-listen on TEST 6. See footer for Dale's
+// in-room notes preserved verbatim.
 // ============================================================================
 //
 // What's new in v04 (session 4):
@@ -877,23 +877,70 @@ s.quit;
 
 
 // ============================================================================
-// END OF v04 FIRST DRAFT. NOT LOCKED.
+// END OF v04. LOCKED session 5 after cold-listen on TEST 6.
 //
-// Test-driven decisions still open:
+// Locked parameters:
+//   Kick:  v02 defaults, carried through v03 (F1 fundamental, 95→43.65Hz
+//          pitch env 35ms, 400ms amp decay, sat 1.5, click 0.15 at 3500Hz).
+//   Perc:  v03 defaults (centreFreq 4000, rq 0.25, attack 0.0005,
+//          decay 0.008, curve -4, amp 0.3, placement on 3 and 11).
+//   Tone:  MoogFF on three-saw stack at F2 (87.31Hz), three-saw detune
+//          0.003, pitch drift ±50c via LFNoise2.kr at 0.1 Hz, resonance
+//          drift 0.15→0.45 via LFNoise2.kr at 0.05 Hz, amp 0.22 under
+//          rhythm (0.25 alone), attack 2.0s.
+//   Cutoff automation: function-pause primary (60s test curve,
+//          180→420→[PAUSE 5s]→260→680→340 with \sine/\step/\sine/\sine/\sine
+//          segments of 15/5/10/15/15s) plus secondary ±15% LFNoise2.kr
+//          at 0.3 Hz, always active including during primary's pause.
 //
-//   1. TEST 1 — do fixed-cutoff values confirm Beltran-adjacent
-//      character on MoogFF? Any instability at high resonance?
-//   2. TEST 2 — does the function-pause curve read as intentional?
-//   3. TEST 3 — is 0.1 Hz the right drift rate?
-//   4. TEST 4 — is resonance drift audible, and if so does it sound
-//      like the filter listening differently or like instability?
-//   5. TEST 5 — do the three motions blend into one tone, or read
-//      as three separate processes? Parallel-attention test.
-//   6. TEST 6 — tone with kick+perc. Crowding at 3-5kHz? Pause
-//      reading as structural under rhythm?
-//   7. TEST 7 — are both 8s and 15s pauses legible as intentional,
-//      or only the shorter one?
+// How it sounds in the room (Dale, session 4 — first listen, in-session):
+//   TEST 1  — "cutoff 300 and cutoff 400 I would say sound about right,
+//             though I think I need to hear them in context to make a
+//             proper evaluation." No instability at resonance 0.6 on
+//             Volt 1 at 48k.
+//   TEST 6  — "TEST 6 as-is sounds great. The pause is very subtle, in
+//             a good way. It's almost imperceptible but it's definitely
+//             there and somehow integrates well with the perc."
+//           — "Somehow the perc feels like it's pushing the movement of
+//             the tone forward, in the same way it anticipates the kick,
+//             I feel like it anticipates the forward motion of the tone,
+//             and during the pause creates a tension between the
+//             elements, so it all feels coherent."
 //
-// Nothing in v04 changes v03's locked kick or perc. If pressure to
-// tweak them arises, new version number.
+// How it sounds in the room (Dale, session 5 — cold listen, governing):
+//   TEST 6  — "I think it sounds great. The tone, interacting with the
+//             perc+kick creates moments of subtle forward-driving and
+//             also moments of straight-ahead and moments of pause,
+//             which never seem to fully resolve and are subtle enough
+//             to feel unpredictable. I feel like it is exactly what we
+//             were going for."
+//           — Listened for 5-6 minutes (~5-6 cycles of the 60s curve),
+//             not 60 seconds. The three-state reading (forward-driving,
+//             straight-ahead, pause) emerged under repetition. The pause
+//             itself is deterministic and identical each cycle; the
+//             surrounding motion varies (primary curve × secondary
+//             LFNoise2 drift at 0.3 Hz with ±15% range). The
+//             unpredictability is emergent from how repetition interacts
+//             with varying context around an identical pause, not from
+//             variation in the pause itself.
+//
+// Governing reading for v06 design: what works is the pause's behaviour
+// under repetition against a varying background. The three-pause
+// structure sketched for v06 (at 1:30-2:30, 4:15-4:35, 5:45-6:15) may
+// not need dramatic variation between pauses — the varying context
+// around them may do the work. Hold this when writing v06.
+//
+// Not tested this session or last (both deliberate — context over
+// isolation after TEST 1):
+//   TESTs 2, 3, 4, 5, 7. TEST 4 (isolated resonance drift) was flagged
+//   session 4 as the one to run if cold-listen softened. Cold-listen
+//   confirmed and sharpened, so TEST 4 is retroactively lower priority.
+//   The SynthDef worked in context; that's the evidence we needed.
+//
+// Next: v05 adds convolution. The TEST 6 finding in its session-5 form
+// changes convolution's brief — open question is whether a shared
+// convolution space reinforces the unpredictable-three-state reading
+// (by placing the whole object in one room) or flattens it (by
+// acoustic-gluing the elements into a single signature). This is a
+// real open question; not resolved pre-code.
 // ============================================================================

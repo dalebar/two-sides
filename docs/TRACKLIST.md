@@ -32,7 +32,7 @@ Human-metabolisable. Detroit / Berlin / ambient / deep house vocabulary. 5–9 m
 
 **Synthesis approach:** Kick is a single sine burst with exponential pitch envelope (95→43.65Hz over 35ms), tanh soft-clip at drive 1.5, 4ms band-passed noise transient click. See `patches/a02_minimal_nation_v02_kick.scd` — kick is locked as of session 2. Percussive figure will be a filtered click train (spec: 4–6kHz BPF, 5–10ms envelope; rhythmic placement to be proposed explicitly rather than defaulting to offbeats). Tonal element is one held F2 note moving ±50c across the track through a resonant LP that opens across the full duration. Space is a convolution reverb built from an algorithmic IR (small domestic room, ~4×5m, 2.7m ceiling, hard surfaces, ~1s tail, gentle HF roll-off). See session 1 and session 2 notes.
 
-**Status (end session 2):** Kick LOCKED. Perc, tone, convolution, and 7-minute structural envelope still to build. Next up: perc (v03).
+**Status (end session 5):** Kick LOCKED (v02, session 2). Perc LOCKED (v03, session 3). Tone LOCKED (v04, session 5) — MoogFF-resonant three-saw at F2 with pitch drift, resonance drift, and function-pause cutoff automation. Next up: convolution (v05) — small domestic room IR, generated in SC; open question flagged whether shared space reinforces or flattens the three-state reading. Full 7-minute structural envelope (v06) follows convolution.
 
 ---
 

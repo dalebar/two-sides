@@ -6,6 +6,86 @@ Format for each entry:
 
 ---
 
+## Session 5 — 2026-04-22 — v04 LOCKED on cold listen, CLAUDE.md updated, v05 convolution framing opened
+
+**Worked on:** Cold-listen on TEST 6 of `patches/a02_minimal_nation_v04_kick_perc_and_tone.scd` before anything else (no TEST 1–5 preliminaries, per the session-4 plan). Dale reported a reading that confirms session 4's finding and sharpens it in an interesting way. v04 LOCKED. Patch footer updated with in-room notes preserved verbatim (v03 footer pattern). TRACKLIST.md a02 status line fixed (stale since session 3). CLAUDE.md got the "conceptual first, musical second" principle added to Aesthetic Principles. Opened the v05 (convolution) framing out loud — no code.
+
+**TEST 6 cold-listen result — the governing reading:**
+
+Dale opened v04, booted, jumped straight to TEST 6. I did not rehearse session 4's finding at him first. His report, verbatim:
+
+> "I think it sounds great. The tone, interacting with the perc+kick creates moments of subtle forward-driving and also moments of straight-ahead and moments of pause, which never seem to fully resolve and are subtle enough to feel unpredictable. I feel like it is exactly what we were going for."
+
+I checked his phrase "moments of pause" (plural) against the patch, because the 60s test curve has exactly one pause (seconds 15–20, \step segment at 420Hz cutoff). Dale clarified he'd listened for 5–6 minutes — ~5–6 cycles of the 60s curve — and was hearing the pause recur across cycles. The plural was cycle-count, not a claim of multiple pauses within one cycle.
+
+This is a different finding from session 4, and arguably a stronger one. I'd expected the cold listen to either confirm or soften the session-4 reading (perc and tone have different temporal orientations; pause is where they become audible as such). Instead Dale's reading reframed: three readable states — forward-driving, straight-ahead, pause — cycling through the combined object, never resolving, subtle enough to feel unpredictable. Not a two-element relationship story; a three-state-of-one-thing story.
+
+The unpredictability is produced by *deterministic content* (the pause is identical each cycle — same cutoff value, same duration, same shape) *in varying context* (the primary curve's sine segments interact with the secondary LFNoise2 drift at 0.3 Hz with ±15% range, which is non-repeating). So the pause arrives into a subtly different frame each cycle. The emergent-unpredictability-from-repetition-against-varying-context is a better description of what v04 is actually doing than session 4's two-element-tension reading, which pre-assumed the effect was localised to the pause moment itself.
+
+We locked on that restatement. Dale's language is preserved verbatim in the patch footer.
+
+**Decided:**
+
+- **v04 LOCKED** on the cold-listen reading above. Patch header changed from "NOT LOCKED" to "LOCKED session 5 after cold-listen on TEST 6." Footer rewritten in v03's footer style: locked parameters listed, session-4 in-room notes and session-5 cold-listen notes both preserved verbatim (session 5 flagged as governing), not-tested items flagged, v05 open question flagged.
+- **TRACKLIST.md a02 status line updated.** Stale since session 3. Now reads: "Status (end session 5): Kick LOCKED (v02, session 2). Perc LOCKED (v03, session 3). Tone LOCKED (v04, session 5) — MoogFF-resonant three-saw at F2 with pitch drift, resonance drift, and function-pause cutoff automation. Next up: convolution (v05) — small domestic room IR, generated in SC; open question flagged whether shared space reinforces or flattens the three-state reading. Full 7-minute structural envelope (v06) follows convolution."
+- **CLAUDE.md updated — conceptual first, musical second.** Added to Aesthetic Principles list, after "Depth over breadth." Wording proposed and accepted as-is: "When a musical decision is in play, the primary test is whether it enacts the record's subject, not whether it works by genre convention. Where the two align, good. Where they diverge, concept wins. This is a weighting, not a rule — musical decisions still have to be musical. But 'this is how a techno track works' is not a sufficient argument on this record, and 'this enacts the frame more honestly' is." Placement as last item lets it act as a governing clause modifying how the other principles apply.
+
+**v05 framing (no code, for session 6 to pick up):**
+
+The session-1 brief for convolution was: small domestic room (~4×5m, 2.7m ceiling, hard surfaces, ~1s tail, gentle HF roll-off), algorithmic IR generated in SC so the IR is part of the compositional record. That was decided before any of a02's other elements existed. The TEST 6 finding makes it worth re-examining — not because it invalidates the session-1 answer, but because it turns that answer from the default into one option among three.
+
+The question: does a shared convolution space reinforce the unpredictable-three-state reading (Option 1: placing the whole object in one room grounds the states against a fixed frame; you hear state change inside a constant; the room tells you it's one voice) or flatten it (Option 2: shared tail and early reflections acoustic-glue kick/perc/tone into one source, which is a form of resolution; the three states could collapse into "a thing in a room doing stuff")?
+
+My prior, weak: Option 1 for small-enough + dry-enough (short tail, low wet/dry, gentle HF roll-off — the original brief). Option 2 for anything bigger or wetter. Reasoning: a small domestic room barely adds tail to a sustained filtered tone or a ~400ms kick; what it adds is a coherence layer that says these events are in the same location. That's grounding, not flattening. Flattening would need a wetter space.
+
+An alternative framing I want on the table for session 6: asymmetric convolution — applied to some elements but not all. E.g., tone convolved (sustained element inhabits a room), kick/perc dry (rhythm stays placeless, abstract). Or the opposite. This would enact a specific conceptual claim and possibly be too strong for the material; it also breaks the one-object-in-one-room reading that Option 1 relies on. Not a proposal, an alternative to hold against session-1's default before writing code.
+
+Decision to make before v05 code: does convolution place the whole object together, place some elements and not others, or not exist at all? Session-1 default is the first. TEST 6 finding doesn't invalidate it but does remove its default status.
+
+**Collaboration notes:**
+
+- **Catching the "plural pauses" phrasing paid off.** Dale said "moments of pause" — could have been loose language, but checking it revealed he'd listened for 5–6 minutes, not 60 seconds, which completely reframed what the finding *was*. If I'd taken the phrasing at face value, the SESSIONS entry would say something like "perc-tone temporal tension reading held up cold" and we'd miss the actual result, which is that the reading changed shape in a useful way. The check cost one clarifying question and produced a sharper finding. Worth repeating: when Dale's language in a listening report is ambiguous between figure-of-speech and specific description, ask.
+- **I named my stake in today's reading being correct, before pressing the interpretation.** Same discipline as session 4. Today's reading is better than session 4's for me (confirms-and-sharpens is the best possible outcome for my proposal); that means I should be the most careful about accepting it. Named the stake, offered the restatement for Dale's approval rather than assuming it, gave him room to push back on my framing. He accepted. The restatement is what's in the patch footer and the docs.
+- **I stopped myself romanticising the listening duration.** When Dale said he'd listened for 5–6 minutes, my first instinct was to read it as a sign of engagement — which it is, but that reading loads significance onto something he said casually. I flagged the observation ("You sat with it. That's a better sign than careful deliberation would be, for this kind of music") and let it stand, rather than building it into the finding. Worth logging as an instance of the catch-and-downshift pattern from session 4, at smaller scale.
+- **Dale-deference pattern did not surface.** No "you're the boss" moments. Dale led on listening, held his description of what he heard against my clarifying questions without caving to my framing, and accepted the restatement only after satisfying himself it was accurate. The pattern from session 4 (I propose, Dale tunes and pushes back, either of us can override on our territory) continued cleanly.
+- **The lock pass went smoothly because I previewed it.** Before writing anything to disk, I showed Dale the three edits (patch header, patch footer, TRACKLIST status line) as markdown. He said "Do it." This is the right pattern for non-trivial edits to locked artefacts — preview, accept, write. Don't write first and let the diff be the proposal.
+
+**Open questions:**
+
+1. **v05 convolution framing decision.** Whole object / asymmetric / absent? See v05 framing section above. To propose concretely before writing code in session 6.
+2. **Full 7-minute envelope (v06) revisited.** The session-5 reading — unpredictability emerges from deterministic pause against varying context — has a specific implication for v06: the three pauses in the 7-minute curve may not need to be different from each other in duration or cutoff value. The varying context around them may do the work. The session-4 sketch had three pauses at different cutoff values and durations; we may want to collapse toward more uniform pauses and let the curve around them vary more. Hold until v05 lands.
+3. **TEST 4 (isolated resonance drift) status.** Session-4 flagged it as the test to run if cold-listen softened. Cold-listen confirmed and sharpened, so TEST 4 is retroactively low-priority — the SynthDef worked in context. Not running it unless something in v05 or v06 raises resonance-drift as a suspect.
+4. **Idempotent bus setup.** Still unaddressed. `~cutoffBus = Bus.control(s, 1)` leaks a bus if evaluated twice. Not harmful short-term, but worth making idempotent in v05. Flag carried forward.
+5. **Still open from earlier sessions:** a07's title; potential merge of a06 and a08; the safety-limiter-at-tail pattern needing a proper group structure as patches grow.
+
+**Next session:**
+
+1. **Resolve v05 convolution framing first.** Propose concretely: whole object / asymmetric / absent. Reference the TEST 6 cold-listen finding; reference the session-1 brief; state prior and reasoning. Let Dale push back before writing code.
+2. **Write `patches/a02_minimal_nation_v05_with_convolution.scd`** once framing is agreed. Kick + perc + tone carried forward verbatim from v04 (LOCKED); new algorithmic IR generator; convolution applied per the session-6 decision. Idempotent bus setup.
+3. **Test scenarios** for v05 should include: convolved full arrangement at 60s (analogous to v04 TEST 6), dry-vs-wet A/B on the same take, and if the framing went asymmetric, isolation tests for each element's convolution state.
+4. **Do NOT re-enter v04 decision space.** If something in v05 surfaces a concern about the locked tone, that's a new-version conversation, not a v04 edit.
+
+**Notes for future-me:**
+
+- **The session-5 cold-listen reading is now the governing description of what a02 does.** Three readable states (forward-driving, straight-ahead, pause) cycling through the combined object, never resolving, subtle enough to feel unpredictable. Unpredictability emergent from deterministic pause against varying context, not from variation in the pause. Hold this against future elements (convolution, envelope, arrangement) and against future A-side tracks. If an element gets proposed that would *add* variation to the pause, check whether it's correcting a problem or breaking the mechanism.
+- **The pattern of readings evolving across sessions matters more than any single reading.** Session 3's TEST 6 reading was about perc placement generating kick-shaped negative space. Session 4's TEST 6 reading was about perc-tone temporal orientation and the pause as tension. Session 5's cold-listen reading is about three-state cycling and emergent unpredictability. All three are compatible; each one sharpened the last. The project isn't "finding the right description"; it's letting the description keep sharpening as the object gets more complete. Don't treat session 5's reading as final.
+- **Dale's language across sessions 3–5 is the actual listening record.** "Attaches itself to the kick that follows" (s3). "Integrates well," "anticipates the forward motion," "tension between the elements" (s4). "Forward-driving," "straight-ahead," "moments of pause," "never seem to fully resolve," "subtle enough to feel unpredictable" (s5). These phrases are more trustworthy than any theoretical reformulation. When a formulation of mine wants to displace them, it's usually because mine is tidier. Tidier is not better on this record.
+- **The preview-before-writing pattern worked for the lock pass.** Three edits shown as markdown, Dale said "Do it," I wrote. Use this pattern for any non-trivial edits to locked artefacts going forward. For small edits to unlocked things, the diff itself can be the proposal.
+- **v05 should not be a session-1 reproduction.** The session-1 brief (small domestic room, ~1s tail) was a reasonable guess from before a02 had elements. It may well still be right. But writing v05 from the session-1 spec without re-examining it given the TEST 6 finding would be under-thinking. Come to session 6 with a proposal that takes today's reading into account, not a patch that executes session 1's guess.
+- **Session pace update.** v04 across two sessions (s4 draft + strong read, s5 cold-listen + lock) matches the session-3 prediction. v05 may follow the same pattern — framing decision + first draft in one session, test + lock in the next. Don't push to fold that into one session just because v04 happened to land cleanly. Depth over breadth, still the discipline.
+- **"Conceptual first, musical second" is now in the brief.** Session 3 flagged it; sessions 4 and 5 did work with it; session 5 codified it. Future-me: when making musical proposals, cite this principle if the proposal departs from genre convention for conceptual reasons. It's the grounds on which a departure gets justified on this record.
+- **v05 open question is a real open question.** I have a prior (Option 1: small-dry-room reinforces, doesn't flatten), but it's weak. Don't press the prior in session 6 without flagging it as a prior. If Dale's listening disagrees with the prior, the listening wins.
+
+**Files touched:**
+
+- `patches/a02_minimal_nation_v04_kick_perc_and_tone.scd` — header marker changed to LOCKED; footer rewritten from NOT-LOCKED test-question list to LOCKED parameters + session 4 in-room notes + session 5 cold-listen notes (governing) + v06 implication + not-tested flags + v05 open question. v03 footer pattern preserved.
+- `docs/TRACKLIST.md` — a02 status line rewritten (was stale since session 3). Now reflects kick+perc+tone LOCKED and names v05/v06 as next.
+- `docs/CLAUDE.md` — "Conceptual first, musical second" added to Aesthetic Principles list as the final item.
+- `docs/SESSIONS.md` — this entry.
+- `docs/REFERENCES.md` — not touched. No new references entered the conversation this session; today was cold-listen on existing work plus framing for v05.
+
+---
+
 ## Session 4 — 2026-04-22 — v04 tonal element drafted, TEST 6 lands, v04 NOT locked pending cold listen
 
 **Worked on:** Proposed the v04 approach before writing code (filter choice, resonance depth, drift mechanism, cutoff automation shape), wrote `patches/a02_minimal_nation_v04_kick_perc_and_tone.scd`, debugged two issues that surfaced on first run, and got Dale through TESTs 1 and 6. TEST 6 returned a stronger result than anticipated — specifically, a reading of the perc-tone temporal relationship that sharpens the project's conceptual frame. v04 is NOT locked; session 5's first job is a fresh TEST 6.
